@@ -1,11 +1,9 @@
-
 CC      	= clang
 CLAGS  		= -Wall -g
 LDFLAGS 	=
 BUILDDIR 	= build
 SOURCEDIR 	= src
 OBJECTDIR 	= obj
-
 OUTPUT 		= headstripper
 
 SRCS = $(wildcard $(SOURCEDIR)/*.c)

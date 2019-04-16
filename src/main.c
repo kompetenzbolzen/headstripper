@@ -10,21 +10,26 @@
 #include <stdlib.h>
 #include <string.h>
 #include <stdint.h>
-
+#include <errno.h>
 
 //SWAPPED
 #define _MAGIC_JPG 0xD8FF //JPG Magic Value
-#define _MAGIC_BMP 0x4D42 //BMP Magic Value
+#define _MAGIC_PNG 0xFFFA //PNG Magic Value
+#define _MAGIC_TFF 0xFFFF //TIFF Magic Value
 
 //JPG
-#define _JPG_EXIF 0xE1
-#define _JPG_COM  0xFE
-#define _JPG_COPY 0xEE
+#define _JPG_EXIF 0xE1 //EXIF
+#define _JPG_COM  0xFE //Comments
+#define _JPG_COPY 0xEE //Copyright notice
 
-#define _JPG_SOS  0xDA
-#define _JPG_EOI  0xD9
+#define _JPG_SOS  0xDA //Start of image data
+#define _JPG_EOI  0xD9 //End of image
 
-void strip_jpg(char *_filename);
+int strip_jpg(char *_filename);
+
+int strip_png(char *_filename);
+
+int strip_tiff(char *_filename);
 
 int main(int argc, char* argv[])
 {
@@ -37,28 +42,33 @@ int main(int argc, char* argv[])
 		exit(1);
 	}
 	
+	//Read magic val
+	image = fopen(argv[1], "r");
+	if(!image)
 	{
-		image = fopen(argv[1], "r");
-
-		if(!image)
-		{
-			printf("Unable to open %s\n", argv[1]);
-			exit(2);
-		}
-
-		fread(&magic, 2, 1, image);
-		fclose(image);
+		printf("Unable to open \"%s\": %i\n", argv[1], errno);
+		exit(2);
 	}
 
-	printf("Magic Value: %X\n", magic);
+	fread(&magic, 2, 1, image);
+	fclose(image);
+
 	switch(magic)
 	{
 		case _MAGIC_JPG:
 			printf("Detected JPG\n");
 			strip_jpg(argv[1]);
 			break;
+		case _MAGIC_PNG:
+			printf("Detected PNG\n");
+			strip_png(argv[1]);
+			break;
+		case _MAGIC_TFF:
+			printf("Detected TIFF\n");
+			strip_tiff(argv[1]);
+			break;
 		default:
-			printf("Unknown filetype.\n");
+			printf("Bad/Unknown Filetype\n");
 			exit(1);
 			break;
 	};
@@ -66,7 +76,8 @@ int main(int argc, char* argv[])
 	return 0;
 }
 
-void strip_jpg(char *_filename)
+//This function assumes a valid JFIF container file! No file validation is performed
+int strip_jpg(char *_filename)
 {
 	FILE *in;
 	FILE *out;
@@ -82,9 +93,11 @@ void strip_jpg(char *_filename)
 
 	//Feelin' lazy. Might add debug later, idk
 	if(!in)
-		exit(1);
-	if(!out)
-		exit(1);
+		return 1;
+	if(!out) {
+		printf("Unable to open for writing %s: %i\n", f__outfile, errno);
+		return 1;
+	}
 	
 	while(1)
 	{
@@ -101,8 +114,7 @@ void strip_jpg(char *_filename)
 
 				seg_len -= 2; //2B are already read!
 
-				for (uint16_t i = 0; i < seg_len; i++)
-				{
+				for (uint16_t i = 0; i < seg_len; i++) {
 					fgetc(in);
 				}	
 			}	
@@ -122,11 +134,72 @@ void strip_jpg(char *_filename)
 		}
 		else
 			fputc(c, out);
+
 		if(feof(in))
 			break;
 	}
 		
 	fclose(in);
 	fclose(out);
-	free(f__outfile);	
+	free(f__outfile);
+
+	return 0;
+}
+
+int strip_png(char *_filename)
+{
+
+	FILE *in;
+	FILE *out;
+
+	int f__outfile_len = strlen(_filename);
+	char *f__outfile = malloc(f__outfile_len + 8);
+
+	strcpy( f__outfile, _filename);
+	strcpy(&f__outfile[f__outfile_len], ".strip\0");
+
+	in = fopen(_filename, "r");
+	out = fopen(f__outfile, "w");
+
+	if(!in)
+		return 1;
+	if(!out) {
+		printf("Unable to open for writing %s: %i\n", f__outfile, errno);
+		return 1;
+	}
+
+	fclose(in);
+	fclose(out);
+	free(f__outfile);
+
+	return 1;
+}
+
+int strip_tiff(char *_filename)
+{
+
+	FILE *in;
+	FILE *out;
+
+	int f__outfile_len = strlen(_filename);
+	char *f__outfile = malloc(f__outfile_len + 8);
+
+	strcpy( f__outfile, _filename);
+	strcpy(&f__outfile[f__outfile_len], ".strip\0");
+
+	in = fopen(_filename, "r");
+	out = fopen(f__outfile, "w");
+
+	if(!in)
+		return 1;
+	if(!out) {
+		printf("Unable to open for writing %s: %i\n", f__outfile, errno);
+		return 1;
+	}
+
+	fclose(in);
+	fclose(out);
+	free(f__outfile);
+
+	return 1;
 }
