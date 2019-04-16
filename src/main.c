@@ -42,15 +42,16 @@ int main(int argc, char* argv[])
 		fclose(image);
 	}
 
-	printf("Magic Value: %x\n", magic);
+	printf("Magic Value: %X\n", magic);
 	switch(magic)
 	{
 		case _MAGIC_JPG:
 			printf("Detected JPG\n");
 			strip_jpg(argv[1]);
 			break;
-		case _MAGIC_BMP:
-			printf("Detected BMP\nUnimplemented.\n");
+		default:
+			printf("Unknown filetype.\n");
+			exit(1);
 			break;
 	};
 
@@ -83,11 +84,15 @@ void strip_jpg(char *_filename)
 		if(c == 0xFF)
 		{
 			unsigned char c2 = fgetc(in);
-			if( c2 == _JPG_EXIF || c2 == _JPG_COM || c2 == _JPG_COPY)
-			{
+			if( c2 == _JPG_EXIF || c2 == _JPG_COM || c2 == _JPG_COPY ) //Add tags here
+			{	
 				unsigned char c3 = fgetc(in);
 				unsigned char c4 = fgetc(in);
 				uint16_t seg_len = (( c3 << 8 ) & 0xff00) + c4;
+				printf("SEG %X SEGLEN %uB\n", c2, seg_len);
+
+				seg_len -= 2; //2B are already read!
+
 				for (uint16_t i = 0; i < seg_len; i++)
 				{
 					fgetc(in);
@@ -95,6 +100,8 @@ void strip_jpg(char *_filename)
 			}	
 			else if ( c2 == _JPG_EOI ) 
 			{
+				printf("ENDSEG\n");
+
 				fputc(c, out);
 				fputc(c2, out);
 				break;
