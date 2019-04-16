@@ -1,3 +1,11 @@
+/*
+ * headstripper
+ * File: main.c
+ * (c) 2019 Jonas Gunz himself(at)jonasgunz.de
+ *
+ * License: MIT
+ * */
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
