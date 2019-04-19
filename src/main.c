@@ -32,7 +32,12 @@
 #define _PNG_IDAT 0x54414449
 #define _PNG_IEND 0x444E4549
 #define _PNG_PLTE 0x45544C50
-
+#define _PNG_tRNS 0x534e5274
+#define _PNG_gAMA 0x414d4167
+#define _PNG_cHRM 0x4d524863
+#define _PNG_sRGB 0x42475273
+#define _PNG_iCCP 0x50434369
+#define _PNG_sBIT 0x54494273
 
 int strip_jpg(char *_filename);
 
@@ -182,6 +187,7 @@ int strip_png(char *_filename)
 
 	uint32_t read_buff = 0;
 	uint32_t chunk_len = 0;
+
 	while(1)
 	{
 		//Heavy shifting
@@ -195,20 +201,35 @@ int strip_png(char *_filename)
 		if(	read_buff == _PNG_IHDR || 
 			read_buff == _PNG_IDAT ||
 			read_buff == _PNG_PLTE ||
-			read_buff == _PNG_IEND )
+		//	read_buff == _PNG_sBIT ||
+		//	read_buff == _PNG_tRNS ||
+		//	read_buff == _PNG_gAMA ||
+		//	read_buff == _PNG_cHRM ||
+		//	read_buff == _PNG_sRGB ||
+		//	read_buff == _PNG_iCCP ||
+		//	read_buff == _PNG_sRGB ||
+			read_buff == _PNG_IEND	)
 		{
 			char *f__buffer = malloc( chunk_len );
 			uint32_t crc;
+
 			//*Ghetto music plays*
 			uint64_t chunk_str = 0;
-			chunk_str += read_buff;
-			
+			chunk_str += read_buff;	
 			printf("CHUNK %s SIZE %uB\n", &chunk_str, chunk_len);
 
 			fread(f__buffer, 1, chunk_len, in);
 			fread(&crc, 1, 4, in);
 
-			fwrite(&chunk_len, 1, sizeof(chunk_len), out);
+			//Flip chunk_len...
+			uint32_t lencpy = chunk_len;
+			for (int i = 0; i < 4; i++)
+			{
+				fputc(lencpy >> 24, out);
+				lencpy <<= 8;
+			}
+			//fwrite(&chunk_len, 1, sizeof(chunk_len), out); //IS flipped!
+
 			fwrite(&read_buff, 1, sizeof(read_buff), out);
 			fwrite(f__buffer, 1, chunk_len, out);
 			fwrite(&crc, 1, 4, out);
