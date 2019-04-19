@@ -12,10 +12,12 @@
 #include <stdint.h>
 #include <errno.h>
 
-//SWAPPED
+
+//Magic values
 #define _MAGIC_JPG 0xD8FF //JPG Magic Value
-#define _MAGIC_PNG 0xFFFA //PNG Magic Value
-#define _MAGIC_TFF 0xFFFF //TIFF Magic Value
+#define _MAGIC_PNG 0x5089
+#define _MAGIC_PNG_FULL 0x0A1A0A0D474E5089 //89 50 4E 47 0D 0A 1A 0A
+#define _MAGIC_TFF 0x2A00 //TIFF Magic Value
 
 //JPG
 #define _JPG_EXIF 0xE1 //EXIF
@@ -24,6 +26,13 @@
 
 #define _JPG_SOS  0xDA //Start of image data
 #define _JPG_EOI  0xD9 //End of image
+
+//PNG
+#define _PNG_IHDR 0x52444849 
+#define _PNG_IDAT 0x54414449
+#define _PNG_IEND 0x444E4549
+#define _PNG_PLTE 0x45544C50
+
 
 int strip_jpg(char *_filename);
 
@@ -167,6 +176,53 @@ int strip_png(char *_filename)
 		printf("Unable to open for writing %s: %i\n", f__outfile, errno);
 		return 1;
 	}
+	
+	uint64_t magic_num = _MAGIC_PNG_FULL;
+	fwrite(&magic_num, 1, 8, out);
+
+	uint32_t read_buff = 0;
+	uint32_t chunk_len = 0;
+	while(1)
+	{
+		//Heavy shifting
+		//Chunk header is 4B
+		chunk_len = ((chunk_len << 8) & 0xFFFFFF00) + ( read_buff & 0x000000FF );
+
+		unsigned char c = fgetc(in);
+		read_buff = ((read_buff >> 8) & 0x00FFFFFF) + (((uint32_t)c << 24) & 0xFF000000);
+	
+		//Whitelist only important PNG chunks
+		if(	read_buff == _PNG_IHDR || 
+			read_buff == _PNG_IDAT ||
+			read_buff == _PNG_PLTE ||
+			read_buff == _PNG_IEND )
+		{
+			char *f__buffer = malloc( chunk_len );
+			uint32_t crc;
+			//*Ghetto music plays*
+			uint64_t chunk_str = 0;
+			chunk_str += read_buff;
+			
+			printf("CHUNK %s SIZE %uB\n", &chunk_str, chunk_len);
+
+			fread(f__buffer, 1, chunk_len, in);
+			fread(&crc, 1, 4, in);
+
+			fwrite(&chunk_len, 1, sizeof(chunk_len), out);
+			fwrite(&read_buff, 1, sizeof(read_buff), out);
+			fwrite(f__buffer, 1, chunk_len, out);
+			fwrite(&crc, 1, 4, out);
+
+			free(f__buffer);
+
+			if(read_buff == _PNG_IEND)
+				break;
+		}
+
+		if(feof(in))
+			break;	
+	}
+
 
 	fclose(in);
 	fclose(out);
@@ -196,6 +252,8 @@ int strip_tiff(char *_filename)
 		printf("Unable to open for writing %s: %i\n", f__outfile, errno);
 		return 1;
 	}
+
+	printf("Unimplemented\n");
 
 	fclose(in);
 	fclose(out);
