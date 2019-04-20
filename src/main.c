@@ -28,10 +28,12 @@
 #define _JPG_EOI  0xD9 //End of image
 
 //PNG
+//Essential chunks
 #define _PNG_IHDR 0x52444849 
 #define _PNG_IDAT 0x54414449
 #define _PNG_IEND 0x444E4549
 #define _PNG_PLTE 0x45544C50
+//Aux chunks
 #define _PNG_tRNS 0x534e5274
 #define _PNG_gAMA 0x414d4167
 #define _PNG_cHRM 0x4d524863
@@ -191,7 +193,6 @@ int strip_png(char *_filename)
 	while(1)
 	{
 		//Heavy shifting
-		//Chunk header is 4B
 		chunk_len = ((chunk_len << 8) & 0xFFFFFF00) + ( read_buff & 0x000000FF );
 
 		unsigned char c = fgetc(in);
@@ -216,7 +217,7 @@ int strip_png(char *_filename)
 			//*Ghetto music plays*
 			uint64_t chunk_str = 0;
 			chunk_str += read_buff;	
-			printf("CHUNK %s SIZE %uB\n", &chunk_str, chunk_len);
+			printf("CHUNK %s SIZE %uB\n", (char*)(&chunk_str), chunk_len);
 
 			fread(f__buffer, 1, chunk_len, in);
 			fread(&crc, 1, 4, in);
@@ -228,7 +229,6 @@ int strip_png(char *_filename)
 				fputc(lencpy >> 24, out);
 				lencpy <<= 8;
 			}
-			//fwrite(&chunk_len, 1, sizeof(chunk_len), out); //IS flipped!
 
 			fwrite(&read_buff, 1, sizeof(read_buff), out);
 			fwrite(f__buffer, 1, chunk_len, out);
