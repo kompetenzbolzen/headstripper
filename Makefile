@@ -1,5 +1,5 @@
-CC      	= clang
-CLAGS  		= -Wall -g
+CC      	= gcc
+CFLAGS		= -Wall
 LDFLAGS 	=
 BUILDDIR 	= build
 SOURCEDIR 	= src
@@ -13,6 +13,9 @@ OBJ  = $(OBJS:$(SOURCEDIR)/%=$(OBJECTDIR)/%)
 build: dir $(OBJ)
 	@echo [LD] $(OBJ)
 	@$(CC) $(CFLAGS) -o $(BUILDDIR)/$(OUTPUT) $(OBJ) $(LDFLAGS)
+
+debug: CFLAGS += -g -D _DEBUG
+debug: build;
 
 dir:
 	@mkdir -p $(OBJECTDIR)

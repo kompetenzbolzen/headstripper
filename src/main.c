@@ -12,6 +12,13 @@
 #include <stdint.h>
 #include <errno.h>
 
+//Program values
+#define _VERSION 0
+#define _SUBVERSION 1
+
+#ifdef _DEBUG
+#warning "Compiling in DEBUG mode"
+#endif
 
 //Magic values
 #define _MAGIC_JPG 0xD8FF //JPG Magic Value
@@ -52,42 +59,46 @@ int main(int argc, char* argv[])
 	FILE *image;
 	uint16_t magic;
 
-	if(argc != 2)
+	if(argc < 2)
 	{
-		printf("Wrong number of arguments!\nUsage: %s <Filename>\n", argv[0]);
+		printf("Wrong number of arguments!\nUsage: %s <Filename(s)>\n", argv[0]);
 		exit(1);
 	}
 	
-	//Read magic val
-	image = fopen(argv[1], "r");
-	if(!image)
+	for(unsigned int cntr = 1; cntr < argc; cntr++)
 	{
-		printf("Unable to open \"%s\": %i\n", argv[1], errno);
-		exit(2);
+		char *filename = argv[cntr];
+		//Read magic val
+		image = fopen(filename, "r");
+		if(!image)
+		{
+			printf("Unable to open \"%s\": %i\n", argv[1], errno);
+			exit(2);
+		}
+	
+		fread(&magic, 2, 1, image);
+		fclose(image);
+	
+		switch(magic)
+		{
+			case _MAGIC_JPG:
+				printf("%s: JPG\n", filename);
+				strip_jpg(filename);
+				break;
+			case _MAGIC_PNG:
+				printf("%s: PNG\n", filename);
+				strip_png(filename);
+				break;
+			case _MAGIC_TFF:
+				printf("%s: TIFF\n", filename);
+				strip_tiff(filename);
+				break;
+			default:
+				printf("%s: Bad/Unknown Filetype\n", filename);
+				exit(1);
+				break;
+		};
 	}
-
-	fread(&magic, 2, 1, image);
-	fclose(image);
-
-	switch(magic)
-	{
-		case _MAGIC_JPG:
-			printf("Detected JPG\n");
-			strip_jpg(argv[1]);
-			break;
-		case _MAGIC_PNG:
-			printf("Detected PNG\n");
-			strip_png(argv[1]);
-			break;
-		case _MAGIC_TFF:
-			printf("Detected TIFF\n");
-			strip_tiff(argv[1]);
-			break;
-		default:
-			printf("Bad/Unknown Filetype\n");
-			exit(1);
-			break;
-	};
 
 	return 0;
 }
@@ -126,8 +137,9 @@ int strip_jpg(char *_filename)
 				unsigned char c3 = fgetc(in);
 				unsigned char c4 = fgetc(in);
 				uint16_t seg_len = (( c3 << 8 ) & 0xff00) + c4;
+#ifdef _DEBUG
 				printf("SEG %X SEGLEN %uB\n", c2, seg_len);
-
+#endif
 				seg_len -= 2; //2B are already read!
 
 				for (uint16_t i = 0; i < seg_len; i++) {
@@ -136,8 +148,9 @@ int strip_jpg(char *_filename)
 			}	
 			else if ( c2 == _JPG_EOI ) 
 			{
+#ifdef _DEBUG
 				printf("ENDSEG\n");
-
+#endif
 				fputc(c, out);
 				fputc(c2, out);
 				break;
@@ -213,12 +226,13 @@ int strip_png(char *_filename)
 		{
 			char *f__buffer = malloc( chunk_len );
 			uint32_t crc;
-
+			
+#ifdef _DEBUG
 			//*Ghetto music plays*
 			uint64_t chunk_str = 0;
 			chunk_str += read_buff;	
 			printf("CHUNK %s SIZE %uB\n", (char*)(&chunk_str), chunk_len);
-
+#endif
 			fread(f__buffer, 1, chunk_len, in);
 			fread(&crc, 1, 4, in);
 
