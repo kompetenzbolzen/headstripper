@@ -65,6 +65,8 @@ int main(int argc, char* argv[])
 		exit(1);
 	}
 	
+	printf("headstripper v%i.%i\n", _VERSION, _SUBVERSION);
+
 	for(unsigned int cntr = 1; cntr < argc; cntr++)
 	{
 		char *filename = argv[cntr];
@@ -112,8 +114,8 @@ int strip_jpg(char *_filename)
 	int f__outfile_len = strlen(_filename);
 	char *f__outfile = malloc(f__outfile_len + 8);
 
-	strcpy( f__outfile, _filename);
-	strcpy(&f__outfile[f__outfile_len], ".strip\0");
+	strncpy( f__outfile, "strip.", 6);
+	strcpy(&f__outfile[6], _filename);
 
 	in = fopen(_filename, "r");
 	out = fopen(f__outfile, "w");
@@ -184,8 +186,8 @@ int strip_png(char *_filename)
 	int f__outfile_len = strlen(_filename);
 	char *f__outfile = malloc(f__outfile_len + 8);
 
-	strcpy( f__outfile, _filename);
-	strcpy(&f__outfile[f__outfile_len], ".strip\0");
+	strncpy( f__outfile, "strip.", 6);
+	strcpy(&f__outfile[6], _filename);
 
 	in = fopen(_filename, "r");
 	out = fopen(f__outfile, "w");
@@ -275,8 +277,8 @@ int strip_tiff(char *_filename)
 	int f__outfile_len = strlen(_filename);
 	char *f__outfile = malloc(f__outfile_len + 8);
 
-	strcpy( f__outfile, _filename);
-	strcpy(&f__outfile[f__outfile_len], ".strip\0");
+	strncpy( f__outfile, "strip.", 6);
+	strcpy(&f__outfile[6], _filename);
 
 	in = fopen(_filename, "r");
 	out = fopen(f__outfile, "w");
