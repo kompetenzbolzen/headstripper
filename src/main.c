@@ -85,7 +85,18 @@ int main(int argc, char* argv[])
 
 	for(unsigned int cntr = 1; cntr < argc; cntr++)
 	{
-		char *filename = argv[cntr];
+		char *filename;
+
+		if (argv[cntr][0] == '"')
+		{
+			unsigned int len = strlen(&argv[cntr][1]);
+			filename = malloc(len);
+			strcpy(filename, &argv[cntr][1]);
+			filename[len - 2] = '\0';
+		}
+		else
+			filename = argv[cntr];
+
 		//Read magic val
 		image = fopen(filename, "rb");
 		if(!image)
