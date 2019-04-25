@@ -80,7 +80,7 @@ int main(int argc, char* argv[])
 	{
 		char *filename = argv[cntr];
 		//Read magic val
-		image = fopen(filename, "r");
+		image = fopen(filename, "rb");
 		if(!image)
 		{
 			printf("Unable to open \"%s\": %i\n", argv[1], errno);
@@ -122,8 +122,8 @@ int strip_jpg(char *_filename)
 
 	char *f__outfile = strcmb("strip.", _filename);
 
-	in = fopen(_filename, "r");
-	out = fopen(f__outfile, "w");
+	in = fopen(_filename, "rb");
+	out = fopen(f__outfile, "wb");
 
 	//Feelin' lazy. Might add debug later, idk
 	if(!in)
@@ -145,18 +145,19 @@ int strip_jpg(char *_filename)
 				unsigned char c4 = fgetc(in);
 				uint16_t seg_len = (( c3 << 8 ) & 0xff00) + c4;
 
-				DEBUG_PRINTF("SEG %X SEGLEN %uB\n", c2, seg_len);
+				DEBUG_PRINTF("SEG %X SEGLEN %uB START @%li", c2, seg_len, ftell(in) );
 
 				seg_len -= 2; //2B are already read!
 
-				for (uint16_t i = 0; i < seg_len; i++) {
+				uint16_t i;
+				for (i = 0; i < seg_len; i++) {
 					fgetc(in);
-				}	
+				}
+				DEBUG_PRINTF(" FINISHED. Read %uB, UNTIL %li\n", i, ftell(in) );
 			}	
 			else if ( c2 == _JPG_EOI ) 
 			{
-
-				DEBUG_PRINTF("ENDSEG\n");
+				DEBUG_PRINTF("ENDSEG @%li\n", ftell(in));
 
 				fputc(c, out);
 				fputc(c2, out);
@@ -173,7 +174,7 @@ int strip_jpg(char *_filename)
 
 		if(feof(in))
 		{
-			DEBUG_PRINTF("Reached EOF before ENDSEG\n");
+			DEBUG_PRINTF("Reached EOF before ENDSEG @%li\n", ftell(in));
 			break;
 		}
 	}
@@ -192,8 +193,8 @@ int strip_png(char *_filename)
 
 	char *f__outfile = strcmb("strip.", _filename);
 
-	in = fopen(_filename, "r");
-	out = fopen(f__outfile, "w");
+	in = fopen(_filename, "rb");
+	out = fopen(f__outfile, "wb");
 
 	if(!in)
 		return 1;
@@ -236,7 +237,7 @@ int strip_png(char *_filename)
 			//*Ghetto music plays*
 			uint64_t chunk_str = 0;
 			chunk_str += read_buff;	
-			printf("CHUNK %s SIZE %uB\n", (char*)(&chunk_str), chunk_len);
+			printf("CHUNK %s SIZE %uB @%li\n", (char*)(&chunk_str), chunk_len, ftell(in) );
 #endif
 			fread(f__buffer, 1, chunk_len, in);
 			fread(&crc, 1, 4, in);
@@ -261,7 +262,7 @@ int strip_png(char *_filename)
 
 		if(feof(in))
 		{
-			DEBUG_PRINTF("Reached EOF before IEND\n");
+			DEBUG_PRINTF("Reached EOF before IEND @%li\n", ftell(in) );
 			break;
 		}
 	}
