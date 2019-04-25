@@ -32,12 +32,19 @@
 #define _MAGIC_TFF 0x2A00 //TIFF Magic Value
 
 //JPG
-#define _JPG_EXIF 0xE1 //EXIF
-#define _JPG_COM  0xFE //Comments
-#define _JPG_COPY 0xEE //Copyright notice
+#define _JPG_SOI  0xFFD8
+#define _JPG_APP0 0xFFE0
+#define _JPG_CX	  0xFFC0
+#define _JPG_DQT  0xFFDB
+#define _JPG_DRI  0xFFDD
+#define _JPG_SOS  0xFFDA //Start of image data
+#define _JPG_EOI  0xFFD9 //End of image
 
-#define _JPG_SOS  0xDA //Start of image data
-#define _JPG_EOI  0xD9 //End of image
+//Stuff to ignore
+#define _JPG_EXIF 0xFFE1 //EXIF
+#define _JPG_COM  0xFFFE //Comments
+#define _JPG_COPY 0xFFEE //Copyright notice
+
 
 //PNG
 //Essential chunks
@@ -133,45 +140,72 @@ int strip_jpg(char *_filename)
 		return 1;
 	}
 
+	uint16_t magic_num = 0xD8FF;
+	fwrite(&magic_num, 1, 2, out);
+
+	uint16_t segment = 0xFFD8;
+
 	while(1)
 	{
 		unsigned char c = fgetc(in);
-		if(c == 0xFF)
+		segment = (segment << 8) + (c & 0x00FF);
+		if(segment == _JPG_APP0 ||
+		   segment == _JPG_DQT  ||
+		   segment == _JPG_DRI  ||
+		  (segment & 0xFFF0) == (_JPG_CX & 0xFFF0))
 		{
-			unsigned char c2 = fgetc(in);
-			if( c2 == _JPG_EXIF || c2 == _JPG_COM || c2 == _JPG_COPY ) //Add tags here
-			{	
-				unsigned char c3 = fgetc(in);
-				unsigned char c4 = fgetc(in);
-				uint16_t seg_len = (( c3 << 8 ) & 0xff00) + c4;
+			unsigned char l1 = fgetc(in);
+			unsigned char l2 = fgetc(in);
+			uint16_t seg_len = (( l1 << 8 ) & 0xff00) + l2;
 
-				DEBUG_PRINTF("SEG %X SEGLEN %uB START @%li", c2, seg_len, ftell(in) );
+			DEBUG_PRINTF("Segment %X, size %uB @%liB\n", segment, seg_len, ftell(in));
 
-				seg_len -= 2; //2B are already read!
+			char *f__buffer = malloc(seg_len - 2);
 
-				uint16_t i;
-				for (i = 0; i < seg_len; i++) {
-					fgetc(in);
-				}
-				DEBUG_PRINTF(" FINISHED. Read %uB, UNTIL %li\n", i, ftell(in) );
-			}	
-			else if ( c2 == _JPG_EOI ) 
-			{
-				DEBUG_PRINTF("ENDSEG @%li\n", ftell(in));
+			fread(f__buffer, 1, seg_len - 2, in);
+			fputc(segment >> 8, out);
+			fputc(segment, out);
+			fputc(seg_len >> 8, out);
+			fputc(seg_len, out);
+			fwrite(f__buffer, 1, seg_len - 2, out);
 
-				fputc(c, out);
-				fputc(c2, out);
-				break;
-			}
-			else
-			{
-				fputc(c, out);
-				fputc(c2, out);
-			}
+			free(f__buffer);
 		}
-		else
-			fputc(c, out);
+		else if(segment == _JPG_EXIF ||
+			segment == _JPG_COM  ||
+			segment == _JPG_COPY )
+		{
+			unsigned char l1 = fgetc(in);
+			unsigned char l2 = fgetc(in);
+			uint16_t seg_len = (( l1 << 8 ) & 0xff00) + l2;
 
+			DEBUG_PRINTF("Ignoring segment %X, size %uB @%liB\n", segment, seg_len, ftell(in));
+
+			char *f__buffer = malloc(seg_len - 2);
+
+			fread(f__buffer, 1, seg_len - 2, in);
+			free(f__buffer);
+
+		}
+		else if(segment == _JPG_SOS)
+		{
+			DEBUG_PRINTF("SOS @%li\n", ftell(in));
+			uint16_t endseg = _JPG_SOS;
+			fputc(segment >> 8, out);
+			fputc(segment, out);
+			while(1)
+			{
+				unsigned char cc = fgetc(in);
+				endseg = (endseg << 8) + (cc & 0x00FF);
+				if(endseg == _JPG_EOI)
+					break;
+				else
+					fputc(cc, out);
+			}
+			DEBUG_PRINTF("ENDSEG @%li\n", ftell(in));
+			fwrite(&endseg, 1, 2, out);
+			break;
+		}
 		if(feof(in))
 		{
 			DEBUG_PRINTF("Reached EOF before ENDSEG @%li\n", ftell(in));
