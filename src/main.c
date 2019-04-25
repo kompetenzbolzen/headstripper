@@ -54,6 +54,8 @@ int strip_png(char *_filename);
 
 int strip_tiff(char *_filename);
 
+char* strcmb(char *_str1, char *_str2);
+
 int main(int argc, char* argv[])
 {
 	FILE *image;
@@ -111,11 +113,7 @@ int strip_jpg(char *_filename)
 	FILE *in;
 	FILE *out;
 
-	int f__outfile_len = strlen(_filename);
-	char *f__outfile = malloc(f__outfile_len + 8);
-
-	strncpy( f__outfile, "strip.", 6);
-	strcpy(&f__outfile[6], _filename);
+	char *f__outfile = strcmb("strip.", _filename);
 
 	in = fopen(_filename, "r");
 	out = fopen(f__outfile, "w");
@@ -183,14 +181,11 @@ int strip_png(char *_filename)
 	FILE *in;
 	FILE *out;
 
-	int f__outfile_len = strlen(_filename);
-	char *f__outfile = malloc(f__outfile_len + 8);
-
-	strncpy( f__outfile, "strip.", 6);
-	strcpy(&f__outfile[6], _filename);
+	char *f__outfile = strcmb("strip.", _filename);
 
 	in = fopen(_filename, "r");
 	out = fopen(f__outfile, "w");
+
 
 	if(!in)
 		return 1;
@@ -271,30 +266,17 @@ int strip_png(char *_filename)
 int strip_tiff(char *_filename)
 {
 
-	FILE *in;
-	FILE *out;
-
-	int f__outfile_len = strlen(_filename);
-	char *f__outfile = malloc(f__outfile_len + 8);
-
-	strncpy( f__outfile, "strip.", 6);
-	strcpy(&f__outfile[6], _filename);
-
-	in = fopen(_filename, "r");
-	out = fopen(f__outfile, "w");
-
-	if(!in)
-		return 1;
-	if(!out) {
-		printf("Unable to open for writing %s: %i\n", f__outfile, errno);
-		return 1;
-	}
-
-	printf("Unimplemented\n");
-
-	fclose(in);
-	fclose(out);
-	free(f__outfile);
-
+	printf("TIFF Unimplemented.\n");
 	return 1;
+
+}
+
+char* strcmb(char *_str1, char *_str2)
+{
+	char *f__return = malloc(strlen(_str1) + strlen(_str2) + 1);
+
+	strcpy( f__return, _str1);
+	strcpy(&f__return[ strlen(_str1) ], _str2);
+
+	return f__return;
 }
