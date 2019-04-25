@@ -74,7 +74,7 @@ int main(int argc, char* argv[])
 	}
 	
 	printf("headstripper v%i.%i\n", _VERSION, _SUBVERSION);
-	DEBUG_PRINTF("==DEBUG MODE==\n");
+	DEBUG_PRINTF("==DEBUG BUILD==\n");
 
 	for(unsigned int cntr = 1; cntr < argc; cntr++)
 	{
@@ -172,7 +172,10 @@ int strip_jpg(char *_filename)
 			fputc(c, out);
 
 		if(feof(in))
+		{
+			DEBUG_PRINTF("Reached EOF before ENDSEG\n");
 			break;
+		}
 	}
 
 	fclose(in);
@@ -257,7 +260,10 @@ int strip_png(char *_filename)
 		}
 
 		if(feof(in))
-			break;	
+		{
+			DEBUG_PRINTF("Reached EOF before IEND\n");
+			break;
+		}
 	}
 
 	fclose(in);

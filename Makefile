@@ -15,7 +15,7 @@ build: dir $(OBJ)
 	@$(CC) $(CFLAGS) -o $(BUILDDIR)/$(OUTPUT) $(OBJ) $(LDFLAGS)
 
 debug: CFLAGS += -g -D _DEBUG
-debug: debug_set build;
+debug: build;
 
 #CLEAN BEFORE WINDOWS BUILD!!!
 windows: CC = x86_64-w64-mingw32-gcc
