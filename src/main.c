@@ -12,12 +12,17 @@
 #include <stdint.h>
 #include <errno.h>
 
-//Program values
 #define _VERSION 0
 #define _SUBVERSION 1
 
 #ifdef _DEBUG
 #warning "Compiling in DEBUG mode"
+#endif
+
+#ifdef _DEBUG
+#define DEBUG_PRINTF( ... ) { printf ( __VA_ARGS__ ); }
+#else
+#define DEBUG_PRINTF( ... ) { }
 #endif
 
 //Magic values
@@ -54,6 +59,7 @@ int strip_png(char *_filename);
 
 int strip_tiff(char *_filename);
 
+//String combine
 char* strcmb(char *_str1, char *_str2);
 
 int main(int argc, char* argv[])
@@ -68,6 +74,7 @@ int main(int argc, char* argv[])
 	}
 	
 	printf("headstripper v%i.%i\n", _VERSION, _SUBVERSION);
+	DEBUG_PRINTF("==DEBUG MODE==\n");
 
 	for(unsigned int cntr = 1; cntr < argc; cntr++)
 	{
@@ -125,7 +132,7 @@ int strip_jpg(char *_filename)
 		printf("Unable to open for writing %s: %i\n", f__outfile, errno);
 		return 1;
 	}
-	
+
 	while(1)
 	{
 		unsigned char c = fgetc(in);
@@ -137,9 +144,9 @@ int strip_jpg(char *_filename)
 				unsigned char c3 = fgetc(in);
 				unsigned char c4 = fgetc(in);
 				uint16_t seg_len = (( c3 << 8 ) & 0xff00) + c4;
-#ifdef _DEBUG
-				printf("SEG %X SEGLEN %uB\n", c2, seg_len);
-#endif
+
+				DEBUG_PRINTF("SEG %X SEGLEN %uB\n", c2, seg_len);
+
 				seg_len -= 2; //2B are already read!
 
 				for (uint16_t i = 0; i < seg_len; i++) {
@@ -148,9 +155,9 @@ int strip_jpg(char *_filename)
 			}	
 			else if ( c2 == _JPG_EOI ) 
 			{
-#ifdef _DEBUG
-				printf("ENDSEG\n");
-#endif
+
+				DEBUG_PRINTF("ENDSEG\n");
+
 				fputc(c, out);
 				fputc(c2, out);
 				break;
@@ -167,7 +174,7 @@ int strip_jpg(char *_filename)
 		if(feof(in))
 			break;
 	}
-		
+
 	fclose(in);
 	fclose(out);
 	free(f__outfile);
@@ -177,7 +184,6 @@ int strip_jpg(char *_filename)
 
 int strip_png(char *_filename)
 {
-
 	FILE *in;
 	FILE *out;
 
@@ -186,14 +192,13 @@ int strip_png(char *_filename)
 	in = fopen(_filename, "r");
 	out = fopen(f__outfile, "w");
 
-
 	if(!in)
 		return 1;
 	if(!out) {
 		printf("Unable to open for writing %s: %i\n", f__outfile, errno);
 		return 1;
 	}
-	
+
 	uint64_t magic_num = _MAGIC_PNG_FULL;
 	fwrite(&magic_num, 1, 8, out);
 
@@ -207,7 +212,7 @@ int strip_png(char *_filename)
 
 		unsigned char c = fgetc(in);
 		read_buff = ((read_buff >> 8) & 0x00FFFFFF) + (((uint32_t)c << 24) & 0xFF000000);
-	
+
 		//Whitelist only important PNG chunks
 		if(	read_buff == _PNG_IHDR || 
 			read_buff == _PNG_IDAT ||
@@ -223,7 +228,7 @@ int strip_png(char *_filename)
 		{
 			char *f__buffer = malloc( chunk_len );
 			uint32_t crc;
-			
+
 #ifdef _DEBUG
 			//*Ghetto music plays*
 			uint64_t chunk_str = 0;
@@ -255,7 +260,6 @@ int strip_png(char *_filename)
 			break;	
 	}
 
-
 	fclose(in);
 	fclose(out);
 	free(f__outfile);
@@ -268,7 +272,6 @@ int strip_tiff(char *_filename)
 
 	printf("TIFF Unimplemented.\n");
 	return 1;
-
 }
 
 char* strcmb(char *_str1, char *_str2)

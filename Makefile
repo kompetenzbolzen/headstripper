@@ -15,7 +15,18 @@ build: dir $(OBJ)
 	@$(CC) $(CFLAGS) -o $(BUILDDIR)/$(OUTPUT) $(OBJ) $(LDFLAGS)
 
 debug: CFLAGS += -g -D _DEBUG
-debug: build;
+debug: debug_set build;
+
+#CLEAN BEFORE WINDOWS BUILD!!!
+windows: CC = x86_64-w64-mingw32-gcc
+windows: OUTPUT =hs.exe
+windows: build;
+
+windows_debug: CC = x86_64-w64-mingw32-gcc
+windows_debug: OUTPUT =hs.exe
+windows_debug: CFLAGS += -g -D _DEBUG
+windows_debug: build;
+
 
 dir:
 	@mkdir -p $(OBJECTDIR)
