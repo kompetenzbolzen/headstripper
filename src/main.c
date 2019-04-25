@@ -173,7 +173,8 @@ int strip_jpg(char *_filename)
 		}
 		else if(segment == _JPG_EXIF ||
 			segment == _JPG_COM  ||
-			segment == _JPG_COPY )
+			segment == _JPG_COPY ||
+			(((segment & 0xFFF0) == (_JPG_APP0 & 0xFFF0)) && ((segment & 0x000F) > 1)))
 		{
 			unsigned char l1 = fgetc(in);
 			unsigned char l2 = fgetc(in);
