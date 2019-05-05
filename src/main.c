@@ -13,7 +13,7 @@
 #include <errno.h>
 
 #define _VERSION 0
-#define _SUBVERSION 2
+#define _SUBVERSION 3
 
 #ifdef _DEBUG
 #warning "Compiling in DEBUG mode"
