@@ -5,6 +5,7 @@ BUILDDIR 	= build
 SOURCEDIR 	= src
 OBJECTDIR 	= obj
 OUTPUT 		= headstripper
+PREFIX 		= /
 
 SRCS = $(wildcard $(SOURCEDIR)/*.c)
 OBJS = $(SRCS:.c=.o)
@@ -43,3 +44,6 @@ clean:
 	@echo [RM] $(BUILDDIR)/$(OUTPUT)
 	@rm -df  $(OBJ)
 	@rm -Rdf $(BUILDDIR) $(OBJECTDIR)
+
+install: build
+	@cp $(BUILDDIR)/$(OUTPUT) $(PREFIX)/bin/$(OUTPUT)
