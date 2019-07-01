@@ -11,9 +11,10 @@
 #include <string.h>
 #include <stdint.h>
 #include <errno.h>
+#include <libgen.h> //dirname / basename
 
 #define _VERSION 0
-#define _SUBVERSION 3
+#define _SUBVERSION 4
 
 #ifdef _DEBUG
 #warning "Compiling in DEBUG mode"
