@@ -66,6 +66,8 @@ int strip_png(char *_filename);
 
 int strip_tiff(char *_filename);
 
+char* gen_filename(char *_filename);
+
 //String combine
 char* strcmb(char *_str1, char *_str2);
 
@@ -138,7 +140,7 @@ int strip_jpg(char *_filename)
 	FILE *in;
 	FILE *out;
 
-	char *f__outfile = strcmb("strip.", _filename);
+	char *f__outfile = gen_filename(_filename);
 
 	in = fopen(_filename, "rb");
 	out = fopen(f__outfile, "wb");
@@ -237,7 +239,7 @@ int strip_png(char *_filename)
 	FILE *in;
 	FILE *out;
 
-	char *f__outfile = strcmb("strip.", _filename);
+	char *f__outfile = gen_filename(_filename);
 
 	in = fopen(_filename, "rb");
 	out = fopen(f__outfile, "wb");
@@ -335,4 +337,23 @@ char* strcmb(char *_str1, char *_str2)
 	strcpy(&f__return[ strlen(_str1) ], _str2);
 
 	return f__return;
+}
+
+char* gen_filename(char *_filename)
+{
+	char *filename1 = strdup(_filename);
+	char *filename2 = strdup(_filename);
+	char *bsename 	= strdup(basename(filename1));
+	char *drname	= strdup(dirname(filename2));
+	int len = strlen(_filename) + 20;
+	char* ret = malloc ( len );
+
+	snprintf(ret, len - 1, "%s/strip.%s", drname, bsename);
+
+	free(filename1);
+	free(filename2);
+	free(bsename);
+	free(drname);
+
+	return ret;
 }
