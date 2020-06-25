@@ -30,7 +30,6 @@
 #define _MAGIC_JPG 0xD8FF //JPG Magic Value
 #define _MAGIC_PNG 0x5089
 #define _MAGIC_PNG_FULL 0x0A1A0A0D474E5089 //89 50 4E 47 0D 0A 1A 0A
-#define _MAGIC_TFF 0x2A00 //TIFF Magic Value
 
 //JPG
 #define _JPG_SOI  0xFFD8
@@ -120,10 +119,6 @@ int main(int argc, char* argv[])
 			case _MAGIC_PNG:
 				printf("%s: PNG\n", filename);
 				strip_png(filename);
-				break;
-			case _MAGIC_TFF:
-				printf("%s: TIFF\n", filename);
-				strip_tiff(filename);
 				break;
 			default:
 				printf("%s: Bad/Unknown Filetype\n", filename);
@@ -320,13 +315,6 @@ int strip_png(char *_filename)
 	fclose(out);
 	free(f__outfile);
 
-	return 1;
-}
-
-int strip_tiff(char *_filename)
-{
-
-	printf("TIFF Unimplemented.\n");
 	return 1;
 }
 
